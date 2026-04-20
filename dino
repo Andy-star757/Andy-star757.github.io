@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chrome Dino Runner</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    body {
+      background: linear-gradient(145deg, #f7f7f7 0%, #eaeaea 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Courier New', Courier, monospace;
+    }
+
+    .game-wrapper {
+      background: #ffffff;
+      border-radius: 32px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+      padding: 24px 24px 30px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    canvas {
+      display: block;
+      width: 800px;
+      max-width: 100%;
+      height: auto;
+      border-radius: 18px;
+      background: #fefefe;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05), 0 6px 12px rgba(0,0,0,0.08);
+      cursor: pointer;
+    }
+
+    .game-bar {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin: 18px 8px 8px 8px;
+      padding: 0 12px;
+    }
+
+    .score-panel {
+      display: flex;
+      gap: 32px;
+    }
+
+    .score-item {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .score-label {
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      color: #2f3e46;
+      text-transform: uppercase;
+    }
+
+    .score-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #1b2a2f;
+      line-height: 1;
+      font-family: 'Courier New', monospace;
+    }
+
+    button {
+      background: #2f3e46;
+      border: none;
+      color: white;
+      font-weight: 600;
+      font-size: 1.1rem;
+      padding: 8px 24px;
+      border-radius: 60px;
+      letter-spacing: 0.8px;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      transition: all 0.15s ease;
+      border: 1px solid #1f2c32;
+      font-family: inherit;
+      text-transform: uppercase;
+    }
+
+    button:hover {
+      background: #1f2c32;
+      transform: scale(0.97);
+      box-shadow: 0 6px 10px rgba(0,0,0,0.08);
+    }
+
+    button:active {
+      background: #0f1a1f;
+    }
+
+    .hint {
+      margin-top: 12px;
+      color: #4a5c66;
+      font-weight: 500;
+      font-size: 0.9rem;
+      letter-spacing: 0.3px;
+    }
+
+    .hint kbd {
+      background: #edf2f4;
+      padding: 3px 8px;
+      border-radius: 30px;
+      font-weight: 700;
+      color: #1b2a2f;
+      margin: 0 2px;
+      border: 1px solid #cad2d9;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+  </style>
+</head>
+<body>
+<div class="game-wrapper">
+  <!-- 画布尺寸 800x300 -->
+  <canvas id="dinoCanvas" width="800" height="300"></canvas>
+
+  <div class="game-bar">
+    <div class="score-panel">
+      <div class="score-item">
+        <span class="score-label">得分</span>
+        <span id="scoreDisplay" class="score-value">0</span>
+      </div>
+      <div class="score-item">
+        <span class="score-label">最高分</span>
+        <span id="highScoreDisplay" class="score-value">0</span>
+      </div>
+    </div>
+    <button id="restartButton">▶ 开始 / 重新开始</button>
+  </div>
+  <div class="hint">
+    <kbd>␣</kbd> 空格 或 <kbd>↑</kbd> 跳跃 · 躲避仙人掌
+  </div>
+</div>
+
+<script>
+  (function(){
+    "use strict";
+
+    // ---------- 画布 & 上下文 ----------
+    const canvas = document.getElementById('dinoCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // UI 元素
+    const scoreSpan = document.getElementById('scoreDisplay');
+    const highScoreSpan = document.getElementById('highScoreDisplay');
+    const restartBtn = document.getElementById('restartButton');
+
+    // ---------- 固定尺寸常量 ----------
+    const GROUND_Y = 260;          // 地面高度 (从画布顶往下)
+    const DINO_WIDTH = 24;
+    const DINO_HEIGHT = 28;
+    const DINO_X = 80;             // 固定水平位置
+
+    // ---------- 物理参数 (手感接近chrome小恐龙) ----------
+    const GRAVITY = 0.6;
+    const JUMP_FORCE = -9.2;
+    const MIN_OBSTACLE_SPEED = 4.6;
+    const MAX_OBSTACLE_SPEED = 9.5;
+    const BASE_SPEED = 4.8;
+
+    // ---------- 障碍物设置 ----------
+    const OBSTACLE_WIDTH = 18;
+    const OBSTACLE_HEIGHT = 30;
+    const MIN_OBSTACLE_INTERVAL = 70;       // 帧数间隔
+    const MAX_OBSTACLE_INTERVAL = 120;
+
+    // ---------- 游戏状态 ----------
+    let gameActive = false;          // true: 进行中, false: 结束/待开始
+    let score = 0;
+    let highScore = 0;
+
+    // 恐龙动力学
+    let dinoY = GROUND_Y - DINO_HEIGHT;    // 地面时的y坐标
+    let dinoVy = 0;
+    let isOnGround = true;
+
+    // 障碍物数组
+    let obstacles = [];
+    
+    // 动态速度 & 生成控制
+    let currentSpeed = BASE_SPEED;
+    let frameCounter = 0;
+    let nextObstacleFrame = 40;      // 游戏激活后重置
+
+    // 最高分初始化 (尝试读取 localStorage)
+    try {
+      const saved = localStorage.getItem('dinoRunnerHighScore');
+      if (saved) highScore = parseInt(saved, 10) || 0;
+    } catch(e) { /* 忽略 */ }
+    highScoreSpan.textContent = highScore;
+
+    // ---------- 辅助函数：更新最高分 ----------
+    function updateHighScoreDisplay() {
+      highScoreSpan.textContent = highScore;
+    }
+
+    function setHighScore(newScore) {
+      if (newScore > highScore) {
+        highScore = newScore;
+        highScoreSpan.textContent = highScore;
+        try {
+          localStorage.setItem('dinoRunnerHighScore', highScore);
+        } catch(e) {}
+      }
+    }
+
+    // ---------- 重置游戏 (开始 / 重开) ----------
+    function resetGame() {
+      // 恐龙状态重置
+      dinoY = GROUND_Y - DINO_HEIGHT;
+      dinoVy = 0;
+      isOnGround = true;
+      
+      // 清空障碍物
+      obstacles = [];
+      
+      // 重置分数 & 速度
+      score = 0;
+      currentSpeed = BASE_SPEED;
+      scoreSpan.textContent = '0';
+      
+      // 生成计时器
+      frameCounter = 0;
+      nextObstacleFrame = getRandomInterval();
+      
+      // 激活游戏
+      gameActive = true;
+    }
+
+    // 随机生成间隔 (帧数)
+    function getRandomInterval() {
+      return Math.floor(Math.random() * (MAX_OBSTACLE_INTERVAL - MIN_OBSTACLE_INTERVAL + 1)) + MIN_OBSTACLE_INTERVAL;
+    }
+
+    // 根据分数调整速度 (提升难度)
+    function updateSpeedByScore() {
+      // 每200分增加速度，但不超过最大值
+      const speedBonus = Math.floor(score / 200) * 0.7;
+      currentSpeed = Math.min(MAX_OBSTACLE_SPEED, BASE_SPEED + speedBonus);
+    }
+
+    // ---------- 跳跃 ----------
+    function jump() {
+      if (!gameActive) return;
+      // 只有在地面才能起跳
+      if (isOnGround) {
+        dinoVy = JUMP_FORCE;
+        isOnGround = false;
+      }
+    }
+
+    // ---------- 碰撞检测 (AABB) ----------
+    function checkCollision(dinoRect, obs) {
+      return (dinoRect.x < obs.x + obs.w &&
+              dinoRect.x + dinoRect.w > obs.x &&
+              dinoRect.y < obs.y + obs.h &&
+              dinoRect.y + dinoRect.h > obs.y);
+    }
+
+    // ---------- 更新逻辑 (物理、障碍物、碰撞、分数) ----------
+    function update() {
+      if (!gameActive) return;
+
+      // ----- 恐龙物理 -----
+      dinoVy += GRAVITY;
+      dinoY += dinoVy;
+
+      // 地板碰撞
+      const floorLevel = GROUND_Y - DINO_HEIGHT;
+      if (dinoY >= floorLevel) {
+        dinoY = floorLevel;
+        dinoVy = 0;
+        isOnGround = true;
+      } else {
+        isOnGround = false;
+      }
+
+      // 防止跳出顶部 (极少情况)
+      if (dinoY < 0) {
+        dinoY = 0;
+        if (dinoVy < 0) dinoVy = 0; // 轻碰天花板
+      }
+
+      // ----- 障碍物移动 & 碰撞 -----
+      for (let i = obstacles.length - 1; i >= 0; i--) {
+        const obs = obstacles[i];
+        obs.x -= currentSpeed;
+
+        // 碰撞检测 (恐龙)
+        const dinoRect = {
+          x: DINO_X,
+          y: dinoY,
+          w: DINO_WIDTH,
+          h: DINO_HEIGHT
+        };
+        
+        if (checkCollision(dinoRect, obs)) {
+          // 游戏结束
+          gameActive = false;
+          setHighScore(score);      // 更新最高分
+          // 直接返回，不再继续更新
+          return;
+        }
+
+        // 如果障碍物完全离开屏幕左侧，加分并移除
+        if (obs.x + obs.w < 0) {
+          obstacles.splice(i, 1);
+          score++;
+          scoreSpan.textContent = score;
+          updateSpeedByScore();
+        }
+      }
+
+      // 如果碰撞导致游戏结束, 不再继续生成逻辑 (但上面return已经处理)
+      if (!gameActive) {
+        setHighScore(score);
+        return;
+      }
+
+      // ----- 障碍物生成 (基于帧计数) -----
+      frameCounter++;
+      if (frameCounter >= nextObstacleFrame) {
+        // 创建新障碍物 (仙人掌)
+        obstacles.push({
+          x: canvas.width,
+          y: GROUND_Y - OBSTACLE_HEIGHT,
+          w: OBSTACLE_WIDTH,
+          h: OBSTACLE_HEIGHT
+        });
+        
+        // 重置计数器 & 设置下一个间隔
+        frameCounter = 0;
+        nextObstacleFrame = getRandomInterval();
+      }
+
+      // 再次确保最高分更新 (如果存活)
+      setHighScore(score);
+    }
+
+    // ---------- 绘制一切 (像素风格) ----------
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // ------- 地面 -------
+      ctx.fillStyle = '#2b2b2b';
+      ctx.fillRect(0, GROUND_Y, canvas.width, 4);
+      
+      // 地面细节 (小短线)
+      ctx.fillStyle = '#5c5c5c';
+      for (let i = 0; i < canvas.width; i += 20) {
+        ctx.fillRect(i + 4, GROUND_Y + 2, 8, 2);
+      }
+      
+      // 远处阴影
+      ctx.fillStyle = '#3a3a3a';
+      ctx.fillRect(0, GROUND_Y + 6, canvas.width, 2);
+
+      // ------- 障碍物 (仙人掌) -------
+      ctx.fillStyle = '#2e6b2e';
+      for (let obs of obstacles) {
+        // 仙人掌主体
+        ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
+        // 小刺 / 细节
+        ctx.fillStyle = '#1e4a1e';
+        ctx.fillRect(obs.x - 2, obs.y + 5, 3, 6);
+        ctx.fillRect(obs.x + obs.w - 1, obs.y + 8, 3, 6);
+        ctx.fillStyle = '#2e6b2e'; // 重置
+      }
+
+      // ------- 恐龙 (小恐龙，像素感) -------
+      // 身体
+      ctx.fillStyle = '#3b3b3b';
+      ctx.fillRect(DINO_X, dinoY, DINO_WIDTH, DINO_HEIGHT);
+      
+      // 眼睛 (根据是否在地面微调？不必要，但很酷)
+      ctx.fillStyle = '#f5f5f5';
+      ctx.fillRect(DINO_X + 16, dinoY + 6, 6, 6);
+      ctx.fillStyle = '#1e1e1e';
+      ctx.fillRect(DINO_X + 18, dinoY + 8, 3, 3);
+      
+      // 牙齿 / 嘴巴 (跳跃时张开一点)
+      ctx.fillStyle = '#c9c9c9';
+      if (!isOnGround) {
+        // 跳跃时嘴巴张开
+        ctx.fillRect(DINO_X + 20, dinoY + 18, 4, 4);
+        ctx.fillStyle = '#5a5a5a';
+        ctx.fillRect(DINO_X + 20, dinoY + 16, 4, 2);
+      } else {
+        // 地面时闭嘴
+        ctx.fillRect(DINO_X + 22, dinoY + 16, 4, 3);
+      }
+      
+      // 恐龙腿 (简单动画: 根据是否在地面)
+      ctx.fillStyle = '#2d2d2d';
+      if (isOnGround) {
+        // 站立
+        ctx.fillRect(DINO_X + 4, dinoY + DINO_HEIGHT-2, 6, 6);
+        ctx.fillRect(DINO_X + 14, dinoY + DINO_HEIGHT-2, 6, 6);
+      } else {
+        // 跳跃中腿向后
+        ctx.fillRect(DINO_X + 2, dinoY + DINO_HEIGHT-4, 5, 6);
+        ctx.fillRect(DINO_X + 18, dinoY + DINO_HEIGHT-4, 5, 6);
+      }
+
+      // ------- 分数 & 状态绘制 (画布上) -------
+      ctx.font = 'bold 18px "Courier New", Courier, monospace';
+      ctx.fillStyle = '#1f2e35';
+      ctx.fillText(`SCORE: ${score}`, 640, 40);
+      
+      if (!gameActive) {
+        // 游戏结束遮罩
+        ctx.fillStyle = 'rgba(30, 30, 30, 0.7)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.font = 'bold 28px "Courier New", Courier, monospace';
+        ctx.fillStyle = '#f0e9e1';
+        ctx.shadowColor = '#1a1a1a';
+        ctx.shadowBlur = 8;
+        ctx.fillText('GAME OVER', 260, 160);
+        ctx.shadowBlur = 0;
+        ctx.font = '18px monospace';
+        ctx.fillText('点击「开始」再来一局', 270, 210);
+      }
+    }
+
+    // ---------- 游戏循环 (requestAnimationFrame) ----------
+    function gameLoop() {
+      if (gameActive) {
+        update();
+      }
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    // ---------- 事件绑定 ----------
+    function handleKeydown(e) {
+      // 防止页面滚动 / 空格键默认行为
+      if (e.code === 'Space' || e.code === 'ArrowUp') {
+        e.preventDefault();
+      }
+      
+      // 仅当游戏进行中时跳跃
+      if (e.code === 'Space' || e.code === 'ArrowUp') {
+        if (gameActive) {
+          jump();
+        }
+      }
+    }
+
+    // 禁止箭头键滚动 (再次确保)
+    window.addEventListener('keydown', function(e) {
+      if (e.code === 'ArrowUp' || e.code === 'ArrowDown' || e.code === 'Space') {
+        e.preventDefault();
+      }
+    }, false);
+    
+    document.addEventListener('keydown', handleKeydown);
+
+    // 点击canvas也可以跳跃 (方便触摸屏/移动设备)
+    canvas.addEventListener('click', () => {
+      if (gameActive) jump();
+    });
+
+    // 重启按钮
+    restartBtn.addEventListener('click', () => {
+      resetGame();
+      // 同时更新最高分显示
+      updateHighScoreDisplay();
+    });
+
+    // 触摸/移动端: 避免点击canvas时页面缩放等
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      if (gameActive) jump();
+    }, {passive: false});
+
+    // 启动游戏循环 (一直运行)
+    gameLoop();
+
+    // 初始状态：游戏未激活, 显示待开始界面, 但恐龙可见
+    // 绘制初始画面 (不激活)
+    gameActive = false;
+    draw();
+
+    // 可选: 首次加载后自动激活? 不过更符合用户预期: 按按钮开始。
+    // 为了友好, 一开始显示开始按钮
+    // 但恐龙和地面都会绘制, 通过draw()展示静态画面。
+    // 如果希望立刻可玩, 可以取消注释下面这行:
+    // resetGame(); 
+
+    // 但是默认显示静态开始界面, 符合直觉。
+    // 为了保证最高分显示正确:
+    updateHighScoreDisplay();
+
+    // 窗口失焦时不做特殊处理, 保持运行。
+  })();
+</script>
+</body>
+</html>
