@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Chrome Dino · 全球排行榜</title>
-  <!-- Supabase SDK -->
+  <title>Chrome Dino · 云端同步</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * {
@@ -12,6 +11,8 @@
       padding: 0;
       box-sizing: border-box;
       user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      outline: none;
     }
     body {
       background: linear-gradient(145deg, #1a2a2f 0%, #0f1a1e 100%);
@@ -31,7 +32,6 @@
       box-shadow: 0 18px 30px rgba(0,0,0,0.5);
       border: 1px solid #3a4e5a;
     }
-    /* 用户栏 */
     .user-bar {
       display: flex;
       align-items: center;
@@ -88,7 +88,6 @@
       background: #3a5563;
       border-color: #6a8a9a;
     }
-    /* 画布 */
     canvas {
       display: block;
       width: 100%;
@@ -97,6 +96,7 @@
       background: #f8fafc;
       box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1), 0 8px 0 #0f171c;
       cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
     }
     .game-bar {
       display: flex;
@@ -142,7 +142,6 @@
       transform: translateY(3px);
       box-shadow: 0 2px 0 #1e333d;
     }
-    /* 排行榜面板 */
     .leaderboard-panel {
       margin-top: 20px;
       background: #152229;
@@ -194,7 +193,6 @@
       border-radius: 30px;
       color: #e6f7ff;
     }
-    /* 模态框 */
     .modal {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -246,7 +244,6 @@
 </head>
 <body>
 <div class="game-container">
-  <!-- 用户栏 -->
   <div class="user-bar">
     <div class="user-info">
       <div class="avatar" id="userAvatar">🦖</div>
@@ -255,14 +252,13 @@
     <div class="auth-buttons">
       <button class="auth-btn" id="loginBtn">登录</button>
       <button class="auth-btn" id="registerBtn">注册</button>
+      <button class="auth-btn guest-btn" id="logoutBtn" style="display:none;">退出</button>
       <button class="auth-btn guest-btn" id="guestModeBtn">游客</button>
     </div>
   </div>
 
-  <!-- 画布 -->
   <canvas id="dinoCanvas" width="800" height="300"></canvas>
 
-  <!-- 分数栏 -->
   <div class="game-bar">
     <div class="scores">
       <div class="score-item">
@@ -277,7 +273,6 @@
     <button id="restartButton">▶ 开始</button>
   </div>
 
-  <!-- 全球排行榜 -->
   <div class="leaderboard-panel">
     <div class="lb-header">
       <span>🏆 全球排行</span>
@@ -288,11 +283,10 @@
     </div>
   </div>
   <div class="hint">
-    <kbd>␣</kbd> 或 <kbd>↑</kbd> 跳跃 · 登录后同步最高分
+    <kbd>␣</kbd> 或 <kbd>↑</kbd> 跳跃 · 点击画面也可跳跃
   </div>
 </div>
 
-<!-- 登录/注册模态框 -->
 <div id="authModal" class="modal" style="display: none;">
   <div class="modal-card">
     <span class="close-icon" id="closeModalBtn">&times;</span>
@@ -310,11 +304,9 @@
   (function(){
     "use strict";
 
-    // ---------- Supabase 配置 (你的密钥) ----------
+    // ---------- Supabase 配置 ----------
     const SUPABASE_URL = 'https://muzurnkbsjcssdeobmmv.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_IguPkc0cmzZayXMEc39fAw_LN7G4Q9u';
-    
-    // 初始化 Supabase 客户端
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // ---------- 游戏常量 ----------
@@ -326,7 +318,6 @@
     const usernameDisplay = document.getElementById('usernameDisplay');
     const userAvatar = document.getElementById('userAvatar');
 
-    // 物理参数
     const GROUND_Y = 260;
     const DINO_WIDTH = 24, DINO_HEIGHT = 28, DINO_X = 80;
     const GRAVITY = 0.6, JUMP_FORCE = -9.2;
@@ -336,16 +327,16 @@
 
     // 游戏状态
     let gameActive = false;
+    let gameHasBeenStarted = false;
     let score = 0;
-    let highScore = 0;          // 本地显示的个人最高 (可能来自云端)
+    let highScore = 0;
     let dinoY = GROUND_Y - DINO_HEIGHT, dinoVy = 0, isOnGround = true;
     let obstacles = [];
     let currentSpeed = BASE_SPEED;
     let frameCounter = 0, nextObstacleFrame = 40;
 
     // 用户状态
-    let currentUser = null;           // { username, id? }  null表示游客
-    let localUsers = {};              // 本地存储的账号密码
+    let currentUser = null; // 云端用户对象
 
     // UI 元素
     const authModal = document.getElementById('authModal');
@@ -357,114 +348,121 @@
     const closeModalBtn = document.getElementById('closeModalBtn');
     const loginBtn = document.getElementById('loginBtn');
     const registerBtn = document.getElementById('registerBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
     const guestBtn = document.getElementById('guestModeBtn');
     const refreshLbBtn = document.getElementById('refreshLbBtn');
     const leaderboardList = document.getElementById('leaderboardList');
 
-    let authMode = 'login'; // 'login' 或 'register'
+    let authMode = 'login';
 
-    // ---------- 本地账号管理 (简易加密存储) ----------
-    function loadLocalUsers() {
-      try {
-        const stored = localStorage.getItem('dino_users');
-        if (stored) localUsers = JSON.parse(stored);
-      } catch(e){}
-    }
-    function saveLocalUsers() {
-      localStorage.setItem('dino_users', JSON.stringify(localUsers));
-    }
-    // 简单哈希 (不可逆，仅用于本地比对)
-    function simpleHash(str) {
-      let hash = 0;
-      for (let i=0; i<str.length; i++) {
-        hash = ((hash << 5) - hash) + str.charCodeAt(i);
-        hash |= 0;
+    // ---------- 初始化检查用户登录状态 ----------
+    async function checkSession() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        await loadUserProfile(session.user);
       }
-      return hash.toString();
     }
 
-    // 加载本地用户
-    loadLocalUsers();
+    async function loadUserProfile(user) {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('username, high_score')
+        .eq('id', user.id)
+        .single();
+      
+      if (data) {
+        currentUser = { id: user.id, username: data.username, highScore: data.high_score || 0 };
+        highScore = data.high_score || 0;
+        highScoreSpan.textContent = highScore;
+        updateUserUI();
+      } else {
+        // 如果档案不存在（旧用户），创建一个
+        const username = user.email?.split('@')[0] || user.id.slice(0,8);
+        await supabase.from('profiles').insert({ id: user.id, username });
+        currentUser = { id: user.id, username, highScore: 0 };
+        updateUserUI();
+      }
+      fetchLeaderboard();
+    }
 
-    // ---------- 更新UI登录状态 ----------
     function updateUserUI() {
       if (currentUser) {
         usernameDisplay.textContent = currentUser.username;
         userAvatar.textContent = currentUser.username.charAt(0).toUpperCase();
+        loginBtn.style.display = 'none';
+        registerBtn.style.display = 'none';
+        logoutBtn.style.display = 'inline-block';
+        guestBtn.style.display = 'none';
       } else {
         usernameDisplay.textContent = '游客';
         userAvatar.textContent = '🦖';
+        loginBtn.style.display = 'inline-block';
+        registerBtn.style.display = 'inline-block';
+        logoutBtn.style.display = 'none';
+        guestBtn.style.display = 'inline-block';
+        highScore = parseInt(sessionStorage.getItem('dino_guest_high') || '0');
+        highScoreSpan.textContent = highScore;
       }
-      // 加载个人最高分
-      loadPersonalHighScore();
     }
 
-    // 加载个人最高 (本地+云端)
-    async function loadPersonalHighScore() {
-      if (currentUser) {
-        // 先从本地缓存取，再从云端同步
-        let localHigh = 0;
-        try {
-          const saved = localStorage.getItem(`dino_high_${currentUser.username}`);
-          if (saved) localHigh = parseInt(saved, 10)||0;
-        } catch(e){}
-        
-        // 从 Supabase 拉取该用户最高分 (使用 profiles 表，假设已建表)
-        try {
-          const { data, error } = await supabase
-            .from('highscores')
-            .select('score')
-            .eq('username', currentUser.username)
-            .order('score', { ascending: false })
-            .limit(1);
-          if (!error && data && data.length>0) {
-            const cloudHigh = data[0].score;
-            highScore = Math.max(localHigh, cloudHigh);
-          } else {
-            highScore = localHigh;
-          }
-        } catch(e) {
-          highScore = localHigh;
+    async function handleAuth() {
+      const username = authUsername.value.trim();
+      const password = authPassword.value;
+      if (!username || !password) { alert('用户名和密码不能为空'); return; }
+
+      if (authMode === 'register') {
+        const email = `${username}@dino.local`; // 虚拟邮箱，用于 Auth
+        const { data, error } = await supabase.auth.signUp({ email, password });
+        if (error) { alert('注册失败：' + error.message); return; }
+        if (data.user) {
+          // 创建 profiles 记录
+          await supabase.from('profiles').insert({ id: data.user.id, username });
+          currentUser = { id: data.user.id, username, highScore: 0 };
+          updateUserUI();
+          hideModal();
+          fetchLeaderboard();
+          alert('注册成功！已自动登录');
         }
       } else {
-        // 游客模式：只读取本次会话最高，不清除之前记录，但不保存
-        const guestHigh = sessionStorage.getItem('dino_guest_high');
-        highScore = guestHigh ? parseInt(guestHigh,10) : 0;
+        const email = `${username}@dino.local`;
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) { alert('登录失败：' + error.message); return; }
+        if (data.user) {
+          await loadUserProfile(data.user);
+          hideModal();
+          alert('登录成功');
+        }
       }
-      highScoreSpan.textContent = highScore;
     }
 
-    // 更新最高分 (并上传云端)
+    async function logout() {
+      await supabase.auth.signOut();
+      currentUser = null;
+      updateUserUI();
+      fetchLeaderboard();
+    }
+
     async function updateHighScore(newScore) {
       if (newScore > highScore) {
         highScore = newScore;
         highScoreSpan.textContent = highScore;
 
         if (currentUser) {
-          // 保存到本地
-          localStorage.setItem(`dino_high_${currentUser.username}`, highScore);
-          // 上传到 Supabase
-          try {
-            await supabase.from('highscores').insert([
-              { username: currentUser.username, score: highScore }
-            ]);
-          } catch(e) { console.warn('上传分数失败', e); }
+          // 更新 Supabase profiles 表
+          await supabase.from('profiles').update({ high_score: highScore }).eq('id', currentUser.id);
         } else {
-          // 游客：存到 sessionStorage
           sessionStorage.setItem('dino_guest_high', highScore);
         }
-        // 刷新排行榜显示
         fetchLeaderboard();
       }
     }
 
-    // ---------- 排行榜 ----------
     async function fetchLeaderboard() {
       try {
         const { data, error } = await supabase
-          .from('highscores')
-          .select('username, score')
-          .order('score', { ascending: false })
+          .from('profiles')
+          .select('username, high_score')
+          .order('high_score', { ascending: false })
           .limit(10);
         if (error) throw error;
         renderLeaderboard(data || []);
@@ -483,13 +481,12 @@
         html += `<div class="lb-row">
           <span class="lb-rank">${idx+1}</span>
           <span class="lb-name">${item.username}</span>
-          <span class="lb-score">${item.score}</span>
+          <span class="lb-score">${item.high_score}</span>
         </div>`;
       });
       leaderboardList.innerHTML = html;
     }
 
-    // ---------- 认证逻辑 ----------
     function showModal(mode) {
       authMode = mode;
       modalTitle.textContent = mode === 'login' ? '登录' : '注册';
@@ -497,51 +494,11 @@
       authPassword.value = '';
       authModal.style.display = 'flex';
     }
-    function hideModal() {
-      authModal.style.display = 'none';
-    }
+    function hideModal() { authModal.style.display = 'none'; }
 
-    function handleAuth() {
-      const username = authUsername.value.trim();
-      const password = authPassword.value;
-      if (!username || !password) {
-        alert('用户名和密码不能为空');
-        return;
-      }
-
-      if (authMode === 'register') {
-        if (localUsers[username]) {
-          alert('用户名已存在');
-          return;
-        }
-        localUsers[username] = simpleHash(password);
-        saveLocalUsers();
-        currentUser = { username };
-        updateUserUI();
-        hideModal();
-        fetchLeaderboard();
-        alert('注册成功！');
-      } else { // login
-        const hash = simpleHash(password);
-        if (localUsers[username] && localUsers[username] === hash) {
-          currentUser = { username };
-          updateUserUI();
-          hideModal();
-          fetchLeaderboard();
-        } else {
-          alert('用户名或密码错误');
-        }
-      }
-    }
-
-    function logoutOrGuest() {
-      currentUser = null;
-      updateUserUI();
-      fetchLeaderboard();
-    }
-
-    // ---------- 游戏逻辑 (与之前类似，但接入最高分更新) ----------
+    // ---------- 游戏逻辑 ----------
     function resetGame() {
+      gameHasBeenStarted = true;
       dinoY = GROUND_Y - DINO_HEIGHT;
       dinoVy = 0;
       isOnGround = true;
@@ -556,10 +513,7 @@
 
     function jump() {
       if (!gameActive) return;
-      if (isOnGround) {
-        dinoVy = JUMP_FORCE;
-        isOnGround = false;
-      }
+      if (isOnGround) { dinoVy = JUMP_FORCE; isOnGround = false; }
     }
 
     function checkCollision(r1, r2) {
@@ -568,7 +522,6 @@
 
     function update() {
       if (!gameActive) return;
-      // 恐龙物理
       dinoVy += GRAVITY;
       dinoY += dinoVy;
       const floor = GROUND_Y - DINO_HEIGHT;
@@ -576,12 +529,10 @@
       else isOnGround = false;
       if (dinoY < 0) { dinoY = 0; if(dinoVy<0) dinoVy=0; }
 
-      // 障碍物
       for (let i=obstacles.length-1; i>=0; i--) {
         const obs = obstacles[i];
         obs.x -= currentSpeed;
-        const dinoRect = { x: DINO_X, y: dinoY, w: DINO_WIDTH, h: DINO_HEIGHT };
-        if (checkCollision(dinoRect, obs)) {
+        if (checkCollision({x:DINO_X,y:dinoY,w:DINO_WIDTH,h:DINO_HEIGHT}, obs)) {
           gameActive = false;
           updateHighScore(score);
           return;
@@ -600,67 +551,51 @@
         frameCounter = 0;
         nextObstacleFrame = Math.floor(Math.random()*(MAX_INTERVAL-MIN_INTERVAL+1))+MIN_INTERVAL;
       }
-
       if (gameActive) updateHighScore(score);
     }
 
     function draw() {
       ctx.clearRect(0,0,canvas.width,canvas.height);
-      // 地面
       ctx.fillStyle='#2b2b2b'; ctx.fillRect(0,GROUND_Y,canvas.width,4);
       ctx.fillStyle='#5c5c5c'; for(let i=0;i<canvas.width;i+=20) ctx.fillRect(i+4,GROUND_Y+2,8,2);
-      // 障碍物
       ctx.fillStyle='#2e6b2e'; obstacles.forEach(o=>ctx.fillRect(o.x,o.y,o.w,o.h));
-      // 恐龙
       ctx.fillStyle='#3b3b3b'; ctx.fillRect(DINO_X,dinoY,DINO_WIDTH,DINO_HEIGHT);
       ctx.fillStyle='#f5f5f5'; ctx.fillRect(DINO_X+16,dinoY+6,6,6);
       ctx.fillStyle='#1e1e1e'; ctx.fillRect(DINO_X+18,dinoY+8,3,3);
       ctx.fillStyle = isOnGround ? '#c9c9c9' : '#aaaaaa';
       ctx.fillRect(DINO_X+20, dinoY+16, 4, isOnGround?3:6);
-      // 分数
       ctx.font='bold 18px "Courier New"'; ctx.fillStyle='#1f2e35'; ctx.fillText(`SCORE: ${score}`,640,40);
-      if(!gameActive) {
+      
+      if(!gameActive && gameHasBeenStarted) {
         ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(0,0,canvas.width,canvas.height);
         ctx.fillStyle='white'; ctx.font='bold 28px monospace'; ctx.fillText('GAME OVER',260,160);
+      } else if (!gameActive && !gameHasBeenStarted) {
+        ctx.font='bold 20px monospace'; ctx.fillStyle='#4a6a7a'; ctx.fillText('点击「开始」奔跑', 300, 160);
       }
     }
 
-    function gameLoop() {
-      if(gameActive) update();
-      draw();
-      requestAnimationFrame(gameLoop);
-    }
+    function gameLoop() { if(gameActive) update(); draw(); requestAnimationFrame(gameLoop); }
 
     // 事件绑定
-    window.addEventListener('keydown', (e) => {
-      if (e.code === 'Space' || e.code === 'ArrowUp') {
-        e.preventDefault();
-        jump();
-      }
-    });
+    window.addEventListener('keydown', (e) => { if(e.code==='Space'||e.code==='ArrowUp'){ e.preventDefault(); jump(); } });
     canvas.addEventListener('click', jump);
+    canvas.addEventListener('touchstart', (e)=>{ e.preventDefault(); jump(); });
     restartBtn.addEventListener('click', resetGame);
     
-    // 认证按钮
     loginBtn.addEventListener('click', ()=>showModal('login'));
     registerBtn.addEventListener('click', ()=>showModal('register'));
-    guestBtn.addEventListener('click', ()=>{
-      logoutOrGuest();
-      alert('已切换为游客模式');
-    });
+    logoutBtn.addEventListener('click', logout);
+    guestBtn.addEventListener('click', async ()=>{ if(currentUser) await logout(); currentUser=null; updateUserUI(); fetchLeaderboard(); });
     modalConfirm.addEventListener('click', handleAuth);
     modalCancel.addEventListener('click', hideModal);
     closeModalBtn.addEventListener('click', hideModal);
     refreshLbBtn.addEventListener('click', fetchLeaderboard);
-    
+
     // 启动
-    loadPersonalHighScore();
+    checkSession();
     updateUserUI();
     fetchLeaderboard();
     gameLoop();
-
-    // 防止页面滚动
-    window.addEventListener('keydown', (e) => { if(e.code==='Space'||e.code==='ArrowUp'||e.code==='ArrowDown') e.preventDefault(); }, false);
   })();
 </script>
 </body>
