@@ -1,10 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Chrome Dino · 云端同步</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <title>MC 模组下载站</title>
   <style>
     * {
       margin: 0;
@@ -12,591 +11,251 @@
       box-sizing: border-box;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
-      outline: none;
     }
+
     body {
-      background: linear-gradient(145deg, #1a2a2f 0%, #0f1a1e 100%);
+      background: linear-gradient(135deg, #0d1b2a 0%, #1b2838 100%);
       min-height: 100vh;
       display: flex;
-      justify-content: center;
-      align-items: center;
-      font-family: 'Courier New', Courier, monospace;
-      padding: 12px;
-    }
-    .game-container {
-      max-width: 900px;
-      width: 100%;
-      background: #1e2b32;
-      border-radius: 28px;
-      padding: 20px 20px 24px;
-      box-shadow: 0 18px 30px rgba(0,0,0,0.5);
-      border: 1px solid #3a4e5a;
-    }
-    .user-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: #152229;
-      padding: 10px 16px;
-      border-radius: 60px;
-      margin-bottom: 16px;
-      color: #e0eef5;
-      border: 1px solid #2e4653;
-    }
-    .user-info {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .avatar {
-      background: #3a5a6a;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-      font-size: 18px;
+      flex-direction: column;
+      font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
       color: white;
+      position: relative;
+      overflow-x: hidden;
     }
-    #usernameDisplay {
-      font-weight: 600;
-      font-size: 1rem;
-    }
-    .auth-buttons {
-      display: flex;
-      gap: 8px;
-    }
-    .auth-btn {
-      background: transparent;
-      border: 1px solid #4a6a7a;
-      color: #d4e9f2;
-      padding: 6px 14px;
-      border-radius: 40px;
-      font-weight: 600;
-      font-size: 0.8rem;
-      cursor: pointer;
-      transition: all 0.15s;
-      font-family: inherit;
-    }
-    .auth-btn:hover {
-      background: #2e4a5a;
-      color: white;
-    }
-    .guest-btn {
-      background: #3a5563;
-      border-color: #6a8a9a;
-    }
-    canvas {
-      display: block;
-      width: 100%;
-      height: auto;
-      border-radius: 18px;
-      background: #f8fafc;
-      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1), 0 8px 0 #0f171c;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .game-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin: 18px 8px 8px;
-    }
-    .scores {
-      display: flex;
-      gap: 28px;
-    }
-    .score-item {
-      color: #bdd3df;
-    }
-    .score-label {
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    .score-value {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #f2e9c2;
-      line-height: 1.2;
-    }
-    button {
-      background: #4f7a8c;
-      border: none;
-      color: white;
-      font-weight: bold;
-      font-size: 1rem;
-      padding: 10px 26px;
-      border-radius: 60px;
-      cursor: pointer;
-      box-shadow: 0 5px 0 #1e333d;
-      transition: all 0.08s;
-      border: 1px solid #7aa5b9;
-      font-family: inherit;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    button:active {
-      transform: translateY(3px);
-      box-shadow: 0 2px 0 #1e333d;
-    }
-    .leaderboard-panel {
-      margin-top: 20px;
-      background: #152229;
-      border-radius: 22px;
-      padding: 16px 18px;
-      border: 1px solid #34505e;
-    }
-    .lb-header {
-      display: flex;
-      justify-content: space-between;
-      color: #d4e4ed;
-      margin-bottom: 10px;
-      font-weight: bold;
-    }
-    .lb-list {
-      max-height: 140px;
-      overflow-y: auto;
-      padding-right: 6px;
-    }
-    .lb-row {
-      display: flex;
-      justify-content: space-between;
-      color: #cfdfe8;
-      padding: 6px 0;
-      border-bottom: 1px solid #2b4452;
-      font-size: 0.9rem;
-    }
-    .lb-rank {
-      color: #f2c94c;
-      font-weight: bold;
-      width: 32px;
-    }
-    .lb-name {
-      flex: 1;
-      font-weight: 500;
-    }
-    .lb-score {
-      font-weight: 700;
-      color: #f5e3a9;
-    }
-    .hint {
-      color: #8aa9bb;
-      margin-top: 8px;
-      font-size: 0.8rem;
-    }
-    kbd {
-      background: #1e313b;
-      padding: 3px 8px;
-      border-radius: 30px;
-      color: #e6f7ff;
-    }
-    .modal {
+
+    /* 背景装饰 */
+    body::before {
+      content: '';
       position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.6);
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 30% 40%, rgba(0, 120, 212, 0.15) 0%, transparent 60%),
+                  radial-gradient(circle at 70% 60%, rgba(0, 200, 100, 0.1) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* 顶部导航 */
+    .top-bar {
       display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 30px;
+      position: relative;
+      z-index: 10;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    .site-title {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 0 0 20px rgba(79, 172, 254, 0.3);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 25px;
+      align-items: center;
+    }
+
+    .nav-links a {
+      color: #c8d6e5;
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 500;
+      transition: color 0.2s;
+      padding: 8px 12px;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+    }
+
+    .nav-links a:hover {
+      color: #4facfe;
+      background: rgba(79, 172, 254, 0.1);
+    }
+
+    .nav-links a.nav-icon {
+      font-size: 1.3rem;
+      padding: 6px 10px;
+    }
+
+    /* 磁贴容器 */
+    .tiles-container {
+      flex: 1;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 25px;
+      padding: 40px 20px;
+      position: relative;
+      z-index: 5;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* 磁贴基础样式 */
+    .tile {
+      width: 180px;
+      height: 180px;
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      z-index: 1000;
-    }
-    .modal-card {
-      background: #1e2b32;
-      padding: 24px 26px;
-      border-radius: 32px;
-      width: 320px;
+      gap: 12px;
+      text-decoration: none;
       color: white;
-      box-shadow: 0 20px 30px black;
-      border: 1px solid #4e7385;
-    }
-    .modal-card h3 {
-      margin-bottom: 18px;
-      color: #f2e9c2;
-    }
-    .modal-card input {
-      width: 100%;
-      padding: 12px 14px;
-      margin-bottom: 14px;
-      background: #0f1a1f;
-      border: 1px solid #3e6275;
-      border-radius: 40px;
-      color: white;
-      font-size: 1rem;
-      outline: none;
-    }
-    .modal-actions {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-    }
-    .modal-btn {
-      padding: 8px 20px;
-      box-shadow: none;
-    }
-    .close-icon {
-      float: right;
+      font-weight: 700;
+      font-size: 1.2rem;
+      transition: all 0.25s cubic-bezier(0.2, 0.9, 0.4, 1);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+      position: relative;
+      overflow: hidden;
+      perspective: 800px;
+      transform-style: preserve-3d;
       cursor: pointer;
-      font-size: 22px;
+    }
+
+    .tile:hover {
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.6);
+    }
+
+    .tile:active {
+      transform: scale(0.92);
+      transition: transform 0.15s ease;
+    }
+
+    /* 磁贴颜色方案 */
+    .tile-download {
+      background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+    }
+    .tile-play {
+      background: linear-gradient(135deg, #107c10 0%, #0b5e0b 100%);
+    }
+    .tile-about {
+      background: linear-gradient(135deg, #e67e22 0%, #c0651f 100%);
+    }
+    .tile-join {
+      background: linear-gradient(135deg, #8e44ad 0%, #6c3483 100%);
+    }
+
+    /* 磁贴图标和文字 */
+    .tile-icon {
+      font-size: 3rem;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .tile-label {
+      font-size: 1.1rem;
+      letter-spacing: 1px;
+    }
+
+    /* 翻转动画（可选） */
+    @keyframes flipTile {
+      0% { transform: rotateY(0deg); }
+      50% { transform: rotateY(90deg); }
+      100% { transform: rotateY(0deg); }
+    }
+    .tile.flip {
+      animation: flipTile 0.5s ease;
+    }
+
+    /* 响应式 */
+    @media (max-width: 600px) {
+      .top-bar {
+        padding: 15px;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .site-title {
+        font-size: 1.8rem;
+      }
+      .nav-links {
+        gap: 15px;
+      }
+      .tile {
+        width: 140px;
+        height: 140px;
+        font-size: 1rem;
+      }
+      .tile-icon {
+        font-size: 2.5rem;
+      }
+    }
+
+    /* 页脚 */
+    .footer {
+      text-align: center;
+      padding: 20px;
+      color: #6c7a89;
+      font-size: 0.8rem;
+      z-index: 5;
     }
   </style>
 </head>
 <body>
-<div class="game-container">
-  <div class="user-bar">
-    <div class="user-info">
-      <div class="avatar" id="userAvatar">🦖</div>
-      <span id="usernameDisplay">游客</span>
-    </div>
-    <div class="auth-buttons">
-      <button class="auth-btn" id="loginBtn">登录</button>
-      <button class="auth-btn" id="registerBtn">注册</button>
-      <button class="auth-btn guest-btn" id="logoutBtn" style="display:none;">退出</button>
-      <button class="auth-btn guest-btn" id="guestModeBtn">游客</button>
+
+  <!-- 顶部导航 -->
+  <div class="top-bar">
+    <div class="site-title">⛏️ MC 模组站</div>
+    <div class="nav-links">
+      <a href="/about/" class="nav-icon" title="关于我们">ℹ️</a>
+      <a href="/join/" class="nav-icon" title="加入我们">👥</a>
+      <a href="https://github.com/Andy-star757/Andy-star757.github.io" target="_blank" class="nav-icon" title="GitHub 仓库">🐙</a>
     </div>
   </div>
 
-  <canvas id="dinoCanvas" width="800" height="300"></canvas>
+  <!-- 磁贴区域 -->
+  <div class="tiles-container">
+    <a href="/downloads/" class="tile tile-download" id="tileDownload">
+      <span class="tile-icon">⬇️</span>
+      <span class="tile-label">下载模组</span>
+    </a>
 
-  <div class="game-bar">
-    <div class="scores">
-      <div class="score-item">
-        <div class="score-label">得分</div>
-        <span id="scoreDisplay" class="score-value">0</span>
-      </div>
-      <div class="score-item">
-        <div class="score-label">个人最高</div>
-        <span id="highScoreDisplay" class="score-value">0</span>
-      </div>
-    </div>
-    <button id="restartButton">▶ 开始</button>
+    <a href="/dino/" class="tile tile-play" id="tilePlay">
+      <span class="tile-icon">🦖</span>
+      <span class="tile-label">玩游戏</span>
+    </a>
+
+    <a href="/about/" class="tile tile-about" id="tileAbout">
+      <span class="tile-icon">📖</span>
+      <span class="tile-label">了解我们</span>
+    </a>
+
+    <a href="/join/" class="tile tile-join" id="tileJoin">
+      <span class="tile-icon">🤝</span>
+      <span class="tile-label">加入我们</span>
+    </a>
   </div>
 
-  <div class="leaderboard-panel">
-    <div class="lb-header">
-      <span>🏆 全球排行</span>
-      <button id="refreshLbBtn" style="padding:4px 12px; font-size:0.7rem; background:#2c4a5a; box-shadow:none;">刷新</button>
-    </div>
-    <div class="lb-list" id="leaderboardList">
-      <div class="lb-row"><span>加载中...</span></div>
-    </div>
+  <!-- 页脚 -->
+  <div class="footer">
+    Powered by GitHub Pages | © 2026 MC Mods
   </div>
-  <div class="hint">
-    <kbd>␣</kbd> 或 <kbd>↑</kbd> 跳跃 · 点击画面也可跳跃
-  </div>
-</div>
 
-<div id="authModal" class="modal" style="display: none;">
-  <div class="modal-card">
-    <span class="close-icon" id="closeModalBtn">&times;</span>
-    <h3 id="modalTitle">登录</h3>
-    <input type="text" id="authUsername" placeholder="用户名" autocomplete="off">
-    <input type="password" id="authPassword" placeholder="密码">
-    <div class="modal-actions">
-      <button class="modal-btn" id="modalCancelBtn">取消</button>
-      <button class="modal-btn" id="modalConfirmBtn" style="background:#5f9db2;">确认</button>
-    </div>
-  </div>
-</div>
-
-<script>
-  (function(){
-    "use strict";
-
-    // ---------- Supabase 配置 ----------
-    const SUPABASE_URL = 'https://muzurnkbsjcssdeobmmv.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_IguPkc0cmzZayXMEc39fAw_LN7G4Q9u';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    // ---------- 游戏常量 ----------
-    const canvas = document.getElementById('dinoCanvas');
-    const ctx = canvas.getContext('2d');
-    const scoreSpan = document.getElementById('scoreDisplay');
-    const highScoreSpan = document.getElementById('highScoreDisplay');
-    const restartBtn = document.getElementById('restartButton');
-    const usernameDisplay = document.getElementById('usernameDisplay');
-    const userAvatar = document.getElementById('userAvatar');
-
-    const GROUND_Y = 260;
-    const DINO_WIDTH = 24, DINO_HEIGHT = 28, DINO_X = 80;
-    const GRAVITY = 0.6, JUMP_FORCE = -9.2;
-    const BASE_SPEED = 4.8, MAX_SPEED = 9.5;
-    const OBSTACLE_WIDTH = 18, OBSTACLE_HEIGHT = 30;
-    const MIN_INTERVAL = 70, MAX_INTERVAL = 120;
-
-    // 游戏状态
-    let gameActive = false;
-    let gameHasBeenStarted = false;
-    let score = 0;
-    let highScore = 0;
-    let dinoY = GROUND_Y - DINO_HEIGHT, dinoVy = 0, isOnGround = true;
-    let obstacles = [];
-    let currentSpeed = BASE_SPEED;
-    let frameCounter = 0, nextObstacleFrame = 40;
-
-    // 用户状态
-    let currentUser = null; // 云端用户对象
-
-    // UI 元素
-    const authModal = document.getElementById('authModal');
-    const modalTitle = document.getElementById('modalTitle');
-    const authUsername = document.getElementById('authUsername');
-    const authPassword = document.getElementById('authPassword');
-    const modalConfirm = document.getElementById('modalConfirmBtn');
-    const modalCancel = document.getElementById('modalCancelBtn');
-    const closeModalBtn = document.getElementById('closeModalBtn');
-    const loginBtn = document.getElementById('loginBtn');
-    const registerBtn = document.getElementById('registerBtn');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const guestBtn = document.getElementById('guestModeBtn');
-    const refreshLbBtn = document.getElementById('refreshLbBtn');
-    const leaderboardList = document.getElementById('leaderboardList');
-
-    let authMode = 'login';
-
-    // ---------- 初始化检查用户登录状态 ----------
-    async function checkSession() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        await loadUserProfile(session.user);
-      }
-    }
-
-    async function loadUserProfile(user) {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('username, high_score')
-        .eq('id', user.id)
-        .single();
-      
-      if (data) {
-        currentUser = { id: user.id, username: data.username, highScore: data.high_score || 0 };
-        highScore = data.high_score || 0;
-        highScoreSpan.textContent = highScore;
-        updateUserUI();
-      } else {
-        // 如果档案不存在（旧用户），创建一个
-        const username = user.email?.split('@')[0] || user.id.slice(0,8);
-        await supabase.from('profiles').insert({ id: user.id, username });
-        currentUser = { id: user.id, username, highScore: 0 };
-        updateUserUI();
-      }
-      fetchLeaderboard();
-    }
-
-    function updateUserUI() {
-      if (currentUser) {
-        usernameDisplay.textContent = currentUser.username;
-        userAvatar.textContent = currentUser.username.charAt(0).toUpperCase();
-        loginBtn.style.display = 'none';
-        registerBtn.style.display = 'none';
-        logoutBtn.style.display = 'inline-block';
-        guestBtn.style.display = 'none';
-      } else {
-        usernameDisplay.textContent = '游客';
-        userAvatar.textContent = '🦖';
-        loginBtn.style.display = 'inline-block';
-        registerBtn.style.display = 'inline-block';
-        logoutBtn.style.display = 'none';
-        guestBtn.style.display = 'inline-block';
-        highScore = parseInt(sessionStorage.getItem('dino_guest_high') || '0');
-        highScoreSpan.textContent = highScore;
-      }
-    }
-
-    async function handleAuth() {
-      const username = authUsername.value.trim();
-      const password = authPassword.value;
-      if (!username || !password) { alert('用户名和密码不能为空'); return; }
-
-      if (authMode === 'register') {
-        const email = `${username}@example.com`;
-        const { data, error } = await supabase.auth.signUp({ email, password });
-        if (error) { alert('注册失败：' + error.message); return; }
-        if (data.user) {
-          // 创建 profiles 记录
-          await supabase.from('profiles').insert({ id: data.user.id, username });
-          currentUser = { id: data.user.id, username, highScore: 0 };
-          updateUserUI();
-          hideModal();
-          fetchLeaderboard();
-          alert('注册成功！已自动登录');
-        }
-      } else {
-       const email = `${username}@example.com`;
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) { alert('登录失败：' + error.message); return; }
-        if (data.user) {
-          await loadUserProfile(data.user);
-          hideModal();
-          alert('登录成功');
-        }
-      }
-    }
-
-    async function logout() {
-      await supabase.auth.signOut();
-      currentUser = null;
-      updateUserUI();
-      fetchLeaderboard();
-    }
-
-    async function updateHighScore(newScore) {
-      if (newScore > highScore) {
-        highScore = newScore;
-        highScoreSpan.textContent = highScore;
-
-        if (currentUser) {
-          // 更新 Supabase profiles 表
-          await supabase.from('profiles').update({ high_score: highScore }).eq('id', currentUser.id);
-        } else {
-          sessionStorage.setItem('dino_guest_high', highScore);
-        }
-        fetchLeaderboard();
-      }
-    }
-
-    async function fetchLeaderboard() {
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('username, high_score')
-          .order('high_score', { ascending: false })
-          .limit(10);
-        if (error) throw error;
-        renderLeaderboard(data || []);
-      } catch(e) {
-        leaderboardList.innerHTML = '<div class="lb-row"><span>排行榜加载失败</span></div>';
-      }
-    }
-
-    function renderLeaderboard(scores) {
-      if (!scores.length) {
-        leaderboardList.innerHTML = '<div class="lb-row"><span>暂无记录，快来玩一局！</span></div>';
-        return;
-      }
-      let html = '';
-      scores.forEach((item, idx) => {
-        html += `<div class="lb-row">
-          <span class="lb-rank">${idx+1}</span>
-          <span class="lb-name">${item.username}</span>
-          <span class="lb-score">${item.high_score}</span>
-        </div>`;
+  <script>
+    // 磁贴点击翻转动画
+    const tiles = document.querySelectorAll('.tile');
+    tiles.forEach(tile => {
+      tile.addEventListener('click', function(e) {
+        // 添加翻转类，动画结束后移除
+        this.classList.add('flip');
+        setTimeout(() => {
+          this.classList.remove('flip');
+        }, 500);
+        // 不阻止默认跳转行为，所以链接会正常跳转
       });
-      leaderboardList.innerHTML = html;
-    }
-
-    function showModal(mode) {
-      authMode = mode;
-      modalTitle.textContent = mode === 'login' ? '登录' : '注册';
-      authUsername.value = '';
-      authPassword.value = '';
-      authModal.style.display = 'flex';
-    }
-    function hideModal() { authModal.style.display = 'none'; }
-
-    // ---------- 游戏逻辑 ----------
-    function resetGame() {
-      gameHasBeenStarted = true;
-      dinoY = GROUND_Y - DINO_HEIGHT;
-      dinoVy = 0;
-      isOnGround = true;
-      obstacles = [];
-      score = 0;
-      currentSpeed = BASE_SPEED;
-      scoreSpan.textContent = '0';
-      frameCounter = 0;
-      nextObstacleFrame = Math.floor(Math.random()*(MAX_INTERVAL-MIN_INTERVAL+1))+MIN_INTERVAL;
-      gameActive = true;
-    }
-
-    function jump() {
-      if (!gameActive) return;
-      if (isOnGround) { dinoVy = JUMP_FORCE; isOnGround = false; }
-    }
-
-    function checkCollision(r1, r2) {
-      return r1.x < r2.x+r2.w && r1.x+r1.w > r2.x && r1.y < r2.y+r2.h && r1.y+r1.h > r2.y;
-    }
-
-    function update() {
-      if (!gameActive) return;
-      dinoVy += GRAVITY;
-      dinoY += dinoVy;
-      const floor = GROUND_Y - DINO_HEIGHT;
-      if (dinoY >= floor) { dinoY = floor; dinoVy = 0; isOnGround = true; }
-      else isOnGround = false;
-      if (dinoY < 0) { dinoY = 0; if(dinoVy<0) dinoVy=0; }
-
-      for (let i=obstacles.length-1; i>=0; i--) {
-        const obs = obstacles[i];
-        obs.x -= currentSpeed;
-        if (checkCollision({x:DINO_X,y:dinoY,w:DINO_WIDTH,h:DINO_HEIGHT}, obs)) {
-          gameActive = false;
-          updateHighScore(score);
-          return;
-        }
-        if (obs.x + obs.w < 0) {
-          obstacles.splice(i,1);
-          score++;
-          scoreSpan.textContent = score;
-          currentSpeed = Math.min(MAX_SPEED, BASE_SPEED + Math.floor(score/200)*0.7);
-        }
-      }
-
-      frameCounter++;
-      if (frameCounter >= nextObstacleFrame) {
-        obstacles.push({ x: canvas.width, y: GROUND_Y - OBSTACLE_HEIGHT, w: OBSTACLE_WIDTH, h: OBSTACLE_HEIGHT });
-        frameCounter = 0;
-        nextObstacleFrame = Math.floor(Math.random()*(MAX_INTERVAL-MIN_INTERVAL+1))+MIN_INTERVAL;
-      }
-      if (gameActive) updateHighScore(score);
-    }
-
-    function draw() {
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      ctx.fillStyle='#2b2b2b'; ctx.fillRect(0,GROUND_Y,canvas.width,4);
-      ctx.fillStyle='#5c5c5c'; for(let i=0;i<canvas.width;i+=20) ctx.fillRect(i+4,GROUND_Y+2,8,2);
-      ctx.fillStyle='#2e6b2e'; obstacles.forEach(o=>ctx.fillRect(o.x,o.y,o.w,o.h));
-      ctx.fillStyle='#3b3b3b'; ctx.fillRect(DINO_X,dinoY,DINO_WIDTH,DINO_HEIGHT);
-      ctx.fillStyle='#f5f5f5'; ctx.fillRect(DINO_X+16,dinoY+6,6,6);
-      ctx.fillStyle='#1e1e1e'; ctx.fillRect(DINO_X+18,dinoY+8,3,3);
-      ctx.fillStyle = isOnGround ? '#c9c9c9' : '#aaaaaa';
-      ctx.fillRect(DINO_X+20, dinoY+16, 4, isOnGround?3:6);
-      ctx.font='bold 18px "Courier New"'; ctx.fillStyle='#1f2e35'; ctx.fillText(`SCORE: ${score}`,640,40);
-      
-      if(!gameActive && gameHasBeenStarted) {
-        ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(0,0,canvas.width,canvas.height);
-        ctx.fillStyle='white'; ctx.font='bold 28px monospace'; ctx.fillText('GAME OVER',260,160);
-      } else if (!gameActive && !gameHasBeenStarted) {
-        ctx.font='bold 20px monospace'; ctx.fillStyle='#4a6a7a'; ctx.fillText('点击「开始」奔跑', 300, 160);
-      }
-    }
-
-    function gameLoop() { if(gameActive) update(); draw(); requestAnimationFrame(gameLoop); }
-
-    // 事件绑定
-    window.addEventListener('keydown', (e) => { if(e.code==='Space'||e.code==='ArrowUp'){ e.preventDefault(); jump(); } });
-    canvas.addEventListener('click', jump);
-    canvas.addEventListener('touchstart', (e)=>{ e.preventDefault(); jump(); });
-    restartBtn.addEventListener('click', resetGame);
-    
-    loginBtn.addEventListener('click', ()=>showModal('login'));
-    registerBtn.addEventListener('click', ()=>showModal('register'));
-    logoutBtn.addEventListener('click', logout);
-    guestBtn.addEventListener('click', async ()=>{ if(currentUser) await logout(); currentUser=null; updateUserUI(); fetchLeaderboard(); });
-    modalConfirm.addEventListener('click', handleAuth);
-    modalCancel.addEventListener('click', hideModal);
-    closeModalBtn.addEventListener('click', hideModal);
-    refreshLbBtn.addEventListener('click', fetchLeaderboard);
-
-    // 启动
-    checkSession();
-    updateUserUI();
-    fetchLeaderboard();
-    gameLoop();
-  })();
-</script>
+    });
+  </script>
 </body>
 </html>
