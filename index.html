@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>青草工坊 · MC模组下载</title>
+  <title>中小学生MC模组下载站</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     
@@ -19,234 +19,256 @@
 
     .container {
       width: 90%;
-      max-width: 1000px;
+      max-width: 800px;
       padding: 40px 0;
+      text-align: center;
     }
 
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 40px;
-      flex-wrap: wrap;
-      gap: 20px;
-    }
+    /* 标题 */
     .header h1 {
-      font-size: 2.5rem;
+      font-size: 2.2rem;
       font-weight: 700;
       background: linear-gradient(135deg, #7fdfb0, #a0ecc8);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      margin-bottom: 8px;
     }
     .header .subtitle {
       color: #8fbfa8;
       font-size: 0.95rem;
-      margin-top: 4px;
-    }
-    .dino-link {
-      background: #3a6650;
-      color: #cbe5d8;
-      padding: 12px 24px;
-      border-radius: 40px;
-      text-decoration: none;
-      font-weight: 600;
-      transition: all 0.25s;
-      border: 1px solid #5a8a6a;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      white-space: nowrap;
-    }
-    .dino-link:hover {
-      background: #4d7d60;
-      color: white;
-      transform: translateY(-2px);
-      box-shadow: 0 12px 20px rgba(0,0,0,0.3);
+      margin-bottom: 50px;
     }
 
     /* 磁贴网格 */
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 30px;
-      margin-bottom: 30px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      max-width: 600px;
+      margin: 0 auto 40px;
+    }
+    @media (max-width: 500px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
     }
 
-    /* 磁贴卡片 + 翻转动画 */
+    /* 磁贴卡片 */
     .card {
       background: #2c4a3a;
-      border-radius: 32px;
-      padding: 28px 24px 24px;
+      border-radius: 28px;
+      padding: 30px 20px;
       cursor: pointer;
-      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), 
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), 
                   box-shadow 0.3s;
       border: 1px solid #4a6e58;
       box-shadow: 0 8px 16px rgba(0,0,0,0.25);
-      /* 3D 翻转动画 */
-      transform-style: preserve-3d;
-      perspective: 800px;
     }
     .card:hover {
-      transform: translateY(-10px) rotateY(8deg) rotateX(4deg) scale(1.03);
-      box-shadow: 0 22px 36px rgba(0,0,0,0.5);
+      transform: translateY(-8px) scale(1.03);
+      box-shadow: 0 18px 30px rgba(0,0,0,0.5);
       border-color: #7fbfa0;
     }
     .card:active {
-      transform: translateY(-4px) rotateY(2deg) scale(0.98);
-      transition: transform 0.1s;
+      transform: scale(0.96);
     }
-    .card .author-badge {
-      display: inline-block;
-      background: #4a7a5a;
-      color: #d0f0d8;
-      font-size: 0.8rem;
-      padding: 4px 12px;
-      border-radius: 20px;
+    .card .icon {
+      font-size: 2.8rem;
       margin-bottom: 10px;
     }
-    .card h3 {
-      font-size: 1.6rem;
-      margin-bottom: 8px;
+    .card .title {
+      font-size: 1.3rem;
+      font-weight: 700;
       color: #f0f8e8;
     }
-    .card .version {
-      font-size: 0.9rem;
-      color: #a0c8b0;
-      margin-bottom: 16px;
-    }
-    .card p {
-      color: #c0dcc8;
-      line-height: 1.5;
-      margin-bottom: 18px;
-    }
-    .download-btn {
-      background: #4a7a5a;
-      border: none;
-      color: white;
-      padding: 10px 20px;
-      border-radius: 30px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-      font-size: 0.9rem;
-    }
-    .download-btn:hover {
-      background: #5fa870;
-    }
 
-    /* 加载动画 */
-    .loading-overlay {
+    /* 弹窗覆盖层 */
+    .modal-overlay {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.85);
+      background: rgba(0,0,0,0.8);
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      z-index: 2000;
+      z-index: 1000;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.3s;
+      transition: opacity 0.25s;
     }
-    .loading-overlay.active {
+    .modal-overlay.active {
       opacity: 1;
       pointer-events: auto;
     }
-    .spinner {
-      width: 60px;
-      height: 60px;
-      border: 6px solid #5a9a6a;
-      border-top: 6px solid #c8e8d8;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin-bottom: 20px;
+    .modal-card {
+      background: #1e3326;
+      max-width: 480px;
+      width: 85%;
+      padding: 30px 24px;
+      border-radius: 32px;
+      border: 1px solid #5a8a6a;
+      text-align: left;
+      color: #e0f0e8;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .loading-text {
-      color: #e0f8e8;
-      font-size: 1.3rem;
+    .modal-card h3 {
+      font-size: 1.6rem;
+      margin-bottom: 16px;
+      color: #f0f8e8;
+    }
+    .modal-card p, .modal-card .content {
+      color: #c0dcc8;
+      line-height: 1.7;
+      margin-bottom: 20px;
+      font-size: 0.95rem;
+    }
+    .modal-card .close-btn {
+      background: transparent;
+      border: 1px solid #6a8a7a;
+      color: #c8e0d0;
+      padding: 10px 24px;
+      border-radius: 30px;
+      font-weight: 600;
+      cursor: pointer;
+      float: right;
+    }
+    .modal-card .close-btn:hover { background: #2a4032; color: white; }
+
+    /* 下载列表 */
+    .download-item {
+      background: #2c4a3a;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .download-item .mod-name {
       font-weight: 600;
     }
+    .download-item .mod-link {
+      background: #4a7a5a;
+      color: white;
+      padding: 8px 18px;
+      border-radius: 20px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .download-item .mod-link:hover { background: #5fa870; }
 
     footer {
-      text-align: center;
       color: #6a8a76;
-      margin-top: 30px;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
     }
   </style>
 </head>
 <body>
 <div class="container">
   <div class="header">
-    <div>
-      <!-- 🏷️ 改名字在这里：第 130 行 -->
-      <h1>🌱 MC模组下载</h1>
-      <div class="subtitle">中小学生MC模组创作分享站</div>
-    </div>
-    <a href="/dino" class="dino-link">🦖 等下载？来玩小恐龙</a>
+    <h1>由一群中小学生制作的MC自制模组下载站</h1>
+    <div class="subtitle">由一群中小学生制作的MC自制模组下载站</div>
   </div>
 
-  <div class="grid" id="modGrid"></div>
-  <footer>📮 所有作品均由同学们自主创作 · 点击卡片下载模组</footer>
+  <!-- 四个磁贴 -->
+  <div class="grid">
+    <div class="card" id="cardAbout">
+      <div class="icon">📖</div>
+      <div class="title">了解我们</div>
+    </div>
+    <div class="card" id="cardDownload">
+      <div class="icon">📦</div>
+      <div class="title">下载</div>
+    </div>
+    <div class="card" id="cardJoin">
+      <div class="icon">👥</div>
+      <div class="title">加入我们</div>
+    </div>
+    <div class="card" id="cardPlay">
+      <div class="icon">🦖</div>
+      <div class="title">玩游戏</div>
+    </div>
+  </div>
+  <footer>所有模组均由我们自主创作</footer>
 </div>
 
-<!-- 加载动画 -->
-<div class="loading-overlay" id="loadingOverlay">
-  <div class="spinner"></div>
-  <div class="loading-text">正在跳转到云盘…</div>
+<!-- 弹窗：了解我们 -->
+<div class="modal-overlay" id="modalAbout">
+  <div class="modal-card">
+    <h3>📖 了解我们</h3>
+    <!-- ⚠️ 修改这里的内容：第 148 行 -->
+    <div class="content">
+      <p>我们是一群热爱MC的中小学生。</p>
+      <p>在这里，我们分享自己制作的模组，希望能给你的游戏带来更多乐趣。</p>
+      <p>所有模组都是同学们利用课余时间创作的，欢迎你来体验！</p>
+    </div>
+    <button class="close-btn" onclick="closeModal('modalAbout')">关闭</button>
+  </div>
+</div>
+
+<!-- 弹窗：下载 -->
+<div class="modal-overlay" id="modalDownload">
+  <div class="modal-card">
+    <h3>📦 模组下载</h3>
+    <!-- ⚠️ 修改这里添加你的模组：第 163 行 -->
+    <div id="downloadList">
+      <!-- 示例模组，你可以按照这个格式复制修改 -->
+      <div class="download-item">
+        <span class="mod-name">暂无模组，请添加</span>
+        <a class="mod-link" href="#" target="_blank">下载</a>
+      </div>
+    </div>
+    <button class="close-btn" onclick="closeModal('modalDownload')">关闭</button>
+  </div>
+</div>
+
+<!-- 弹窗：加入我们 -->
+<div class="modal-overlay" id="modalJoin">
+  <div class="modal-card">
+    <h3>👥 加入我们</h3>
+    <!-- ⚠️ 修改这里的QQ群号：第 180 行 -->
+    <div class="content">
+      <p>欢迎加入我们的QQ群</p>
+      <p style="font-size:1.5rem; font-weight:700; color:#7fdfb0;">QQ群：981913198</p>
+    </div>
+    <!-- ⚠️ 修改QQ群跳转链接：第 185 行 -->
+    <a id="qqGroupLink" href="#" target="_blank" style="background:#4a7a5a; color:white; padding:12px 24px; border-radius:30px; text-decoration:none; display:inline-block; font-weight:600;">一键加群</a>
+    <button class="close-btn" onclick="closeModal('modalJoin')" style="margin-top:12px;">关闭</button>
+  </div>
 </div>
 
 <script>
   // ============================================================
-  // 📝 在这里填写你的模组数据（第 155 - 180 行）
-  // 每个模组的 cloudUrl 填云盘链接
+  // 📝 你需要修改的地方（行数对照上方 HTML 注释）
+  // 第 148 行：了解我们的内容
+  // 第 163 行：下载列表的模组
+  // 第 180 行：QQ群号显示
+  // 第 185 行：QQ群跳转链接
   // ============================================================
-  const mods = [
-    // {
-    //   name: "模组名称",
-    //   author: "作者",
-    //   version: "1.20.1",
-    //   shortDesc: "简短描述",
-    //   cloudUrl: "https://pan.baidu.com/s/xxxx"
-    // },
-  ];
 
-  const grid = document.getElementById('modGrid');
-  const loadingOverlay = document.getElementById('loadingOverlay');
+  // 磁贴点击事件
+  document.getElementById('cardAbout').addEventListener('click', () => openModal('modalAbout'));
+  document.getElementById('cardDownload').addEventListener('click', () => openModal('modalDownload'));
+  document.getElementById('cardJoin').addEventListener('click', () => openModal('modalJoin'));
+  document.getElementById('cardPlay').addEventListener('click', () => {
+    window.location.href = '/dino';
+  });
 
-  function renderCards() {
-    if (mods.length === 0) {
-      grid.innerHTML = '<p style="grid-column:1/-1; text-align:center; color:#a0c8b0;">暂无模组，请联系站长添加</p>';
-      return;
-    }
-    grid.innerHTML = mods.map((mod, index) => `
-      <div class="card" data-url="${mod.cloudUrl}">
-        <span class="author-badge">👤 ${mod.author}</span>
-        <h3>${mod.name}</h3>
-        <div class="version">🔖 ${mod.version}</div>
-        <p>${mod.shortDesc}</p>
-        <button class="download-btn">⬇️ 下载模组</button>
-      </div>
-    `).join('');
-    
-    // 绑定下载按钮
-    document.querySelectorAll('.download-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation(); // 防止触发卡片的点击
-        const url = btn.closest('.card').dataset.url;
-        if (!url) return alert('下载链接暂未配置');
-        loadingOverlay.classList.add('active');
-        setTimeout(() => {
-          window.open(url, '_blank');
-          loadingOverlay.classList.remove('active');
-        }, 1500);
-      });
-    });
+  function openModal(id) {
+    document.getElementById(id).classList.add('active');
   }
-
-  renderCards();
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+  }
+  // 点击背景关闭弹窗
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) overlay.classList.remove('active');
+    });
+  });
 </script>
 </body>
 </html>
