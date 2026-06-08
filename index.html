@@ -1,274 +1,174 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>中小学生MC模组下载站</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    
-    body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      background: linear-gradient(135deg, #1e3a2f 0%, #2a4a3a 50%, #1a2f24 100%);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      color: #e0f0e8;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>模组主页 · Metro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    .container {
-      width: 90%;
-      max-width: 800px;
-      padding: 40px 0;
-      text-align: center;
-    }
+        body {
+            font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', system-ui, -apple-system, sans-serif;
+            background: #1d1d1d;
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
 
-    /* 标题 */
-    .header h1 {
-      font-size: 2.2rem;
-      font-weight: 700;
-      background: linear-gradient(135deg, #7fdfb0, #a0ecc8);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 8px;
-    }
-    .header .subtitle {
-      color: #8fbfa8;
-      font-size: 0.95rem;
-      margin-bottom: 50px;
-    }
+        .app-container {
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
 
-    /* 磁贴网格 */
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 24px;
-      max-width: 600px;
-      margin: 0 auto 40px;
-    }
-    @media (max-width: 500px) {
-      .grid {
-        grid-template-columns: 1fr;
-      }
-    }
+        .tile-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.25s ease, transform 0.25s ease;
+        }
 
-    /* 磁贴卡片 */
-    .card {
-      background: #2c4a3a;
-      border-radius: 28px;
-      padding: 30px 20px;
-      cursor: pointer;
-      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), 
-                  box-shadow 0.3s;
-      border: 1px solid #4a6e58;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.25);
-    }
-    .card:hover {
-      transform: translateY(-8px) scale(1.03);
-      box-shadow: 0 18px 30px rgba(0,0,0,0.5);
-      border-color: #7fbfa0;
-    }
-    .card:active {
-      transform: scale(0.96);
-    }
-    .card .icon {
-      font-size: 2.8rem;
-      margin-bottom: 10px;
-    }
-    .card .title {
-      font-size: 1.3rem;
-      font-weight: 700;
-      color: #f0f8e8;
-    }
+        .tile {
+            width: 200px;
+            height: 200px;
+            background: #2d2d2d;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-weight: 500;
+            font-size: 1.5rem;
+            letter-spacing: 1px;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.5);
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
 
-    /* 弹窗覆盖层 */
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.25s;
-    }
-    .modal-overlay.active {
-      opacity: 1;
-      pointer-events: auto;
-    }
-    .modal-card {
-      background: #1e3326;
-      max-width: 480px;
-      width: 85%;
-      padding: 30px 24px;
-      border-radius: 32px;
-      border: 1px solid #5a8a6a;
-      text-align: left;
-      color: #e0f0e8;
-    }
-    .modal-card h3 {
-      font-size: 1.6rem;
-      margin-bottom: 16px;
-      color: #f0f8e8;
-    }
-    .modal-card p, .modal-card .content {
-      color: #c0dcc8;
-      line-height: 1.7;
-      margin-bottom: 20px;
-      font-size: 0.95rem;
-    }
-    .modal-card .close-btn {
-      background: transparent;
-      border: 1px solid #6a8a7a;
-      color: #c8e0d0;
-      padding: 10px 24px;
-      border-radius: 30px;
-      font-weight: 600;
-      cursor: pointer;
-      float: right;
-    }
-    .modal-card .close-btn:hover { background: #2a4032; color: white; }
+        .tile.download { background: #107c10; }
+        .tile.join { background: #0078d4; }
+        .tile.about { background: #d83b01; }
 
-    /* 下载列表 */
-    .download-item {
-      background: #2c4a3a;
-      border-radius: 16px;
-      padding: 16px;
-      margin-bottom: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-    .download-item .mod-name {
-      font-weight: 600;
-    }
-    .download-item .mod-link {
-      background: #4a7a5a;
-      color: white;
-      padding: 8px 18px;
-      border-radius: 20px;
-      text-decoration: none;
-      font-weight: 600;
-      font-size: 0.9rem;
-      cursor: pointer;
-    }
-    .download-item .mod-link:hover { background: #5fa870; }
+        .tile:hover {
+            transform: scale(1.04);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.6);
+            filter: brightness(1.1);
+        }
+        .tile:active {
+            transform: scale(0.97);
+            filter: brightness(0.95);
+        }
 
-    footer {
-      color: #6a8a76;
-      font-size: 0.85rem;
-    }
-  </style>
-</head>
-<body>
-<div class="container">
-  <div class="header">
-    <h1>由一群中小学生制作的MC自制模组下载站</h1>
-    <div class="subtitle">由一群中小学生制作的MC自制模组下载站</div>
-  </div>
+        .tile-icon {
+            font-size: 3.5rem;
+            margin-bottom: 12px;
+            line-height: 1;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        .tile-label {
+            font-size: 1.3rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            text-align: center;
+        }
 
-  <!-- 四个磁贴 -->
-  <div class="grid">
-    <div class="card" id="cardAbout">
-      <div class="icon">📖</div>
-      <div class="title">了解我们</div>
-    </div>
-    <div class="card" id="cardDownload">
-      <div class="icon">📦</div>
-      <div class="title">下载</div>
-    </div>
-    <div class="card" id="cardJoin">
-      <div class="icon">👥</div>
-      <div class="title">加入我们</div>
-    </div>
-    <div class="card" id="cardPlay">
-      <div class="icon">🦖</div>
-      <div class="title">玩游戏</div>
-    </div>
-  </div>
-  <footer>所有模组均由我们自主创作</footer>
-</div>
+        .page-panel {
+            display: none;
+            width: 100%;
+            max-width: 650px;
+            background: #2a2a2a;
+            border-radius: 8px;
+            padding: 40px 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.7);
+            text-align: center;
+            animation: fadeSlideIn 0.3s ease;
+        }
+        .page-panel.active {
+            display: block;
+        }
 
-<!-- 弹窗：了解我们 -->
-<div class="modal-overlay" id="modalAbout">
-  <div class="modal-card">
-    <h3>📖 了解我们</h3>
-    <!-- ⚠️ 修改这里的内容：第 148 行 -->
-    <div class="content">
-      <p>我们是一群热爱MC的中小学生。</p>
-      <p>在这里，我们分享自己制作的模组，希望能给你的游戏带来更多乐趣。</p>
-      <p>所有模组都是同学们利用课余时间创作的，欢迎你来体验！</p>
-    </div>
-    <button class="close-btn" onclick="closeModal('modalAbout')">关闭</button>
-  </div>
-</div>
+        @keyframes fadeSlideIn {
+            0% { opacity: 0; transform: translateY(25px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
 
-<!-- 弹窗：下载 -->
-<div class="modal-overlay" id="modalDownload">
-  <div class="modal-card">
-    <h3>📦 模组下载</h3>
-    <!-- ⚠️ 修改这里添加你的模组：第 163 行 -->
-    <div id="downloadList">
-      <!-- 示例模组，你可以按照这个格式复制修改 -->
-      <div class="download-item">
-        <span class="mod-name">暂无模组，请添加</span>
-        <a class="mod-link" href="#" target="_blank">下载</a>
-      </div>
-    </div>
-    <button class="close-btn" onclick="closeModal('modalDownload')">关闭</button>
-  </div>
-</div>
+        .back-button {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.25);
+            color: #ffffff;
+            font-size: 1rem;
+            padding: 10px 24px;
+            border-radius: 30px;
+            cursor: pointer;
+            margin-bottom: 28px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .back-button:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: rgba(255,255,255,0.5);
+        }
 
-<!-- 弹窗：加入我们 -->
-<div class="modal-overlay" id="modalJoin">
-  <div class="modal-card">
-    <h3>👥 加入我们</h3>
-    <!-- ⚠️ 修改这里的QQ群号：第 180 行 -->
-    <div class="content">
-      <p>欢迎加入我们的QQ群</p>
-      <p style="font-size:1.5rem; font-weight:700; color:#7fdfb0;">QQ群：981913198</p>
-    </div>
-    <!-- ⚠️ 修改QQ群跳转链接：第 185 行 -->
-    <a id="qqGroupLink" href="#" target="_blank" style="background:#4a7a5a; color:white; padding:12px 24px; border-radius:30px; text-decoration:none; display:inline-block; font-weight:600;">一键加群</a>
-    <button class="close-btn" onclick="closeModal('modalJoin')" style="margin-top:12px;">关闭</button>
-  </div>
-</div>
+        .panel-title {
+            font-size: 2.2rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .panel-content {
+            font-size: 1.1rem;
+            line-height: 1.7;
+            margin-bottom: 30px;
+            color: #e0e0e0;
+        }
 
-<script>
-  // ============================================================
-  // 📝 你需要修改的地方（行数对照上方 HTML 注释）
-  // 第 148 行：了解我们的内容
-  // 第 163 行：下载列表的模组
-  // 第 180 行：QQ群号显示
-  // 第 185 行：QQ群跳转链接
-  // ============================================================
-
-  // 磁贴点击事件
-  document.getElementById('cardAbout').addEventListener('click', () => openModal('modalAbout'));
-  document.getElementById('cardDownload').addEventListener('click', () => openModal('modalDownload'));
-  document.getElementById('cardJoin').addEventListener('click', () => openModal('modalJoin'));
-  document.getElementById('cardPlay').addEventListener('click', () => {
-    window.location.href = '/dino';
-  });
-
-  function openModal(id) {
-    document.getElementById(id).classList.add('active');
-  }
-  function closeModal(id) {
-    document.getElementById(id).classList.remove('active');
-  }
-  // 点击背景关闭弹窗
-  document.querySelectorAll('.modal-overlay').forEach(overlay => {
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) overlay.classList.remove('active');
-    });
-  });
-</script>
-</body>
-</html>
+        .action-button {
+            display: inline-block;
+            background: #0078d4;
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+            padding: 14px 32px;
+            border: none;
+            border-radius: 6px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(0,120,212,0.4);
+            letter-spacing: 0.5px;
+            margin: 6px;
+        }
+        .action-button:hover {
+            background: #1084e0;
+            box-shadow: 0 6px 18px rgba(0,120,212,0.6);
+            transform: translateY(-2px);
+        }
+        .action-button.green {
+            background: #107c10;
+            box-shadow: 0 4px 12px rgba(16,124,16,0.4);
+        }
+        .action-button.green:hover {
+            background: #189618;
+            box-shadow: 0 6px 18px
