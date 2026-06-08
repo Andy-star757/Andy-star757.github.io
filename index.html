@@ -2,173 +2,195 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>模组主页 · Metro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模组主页</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        /* 基础重置 */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
-            font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', system-ui, -apple-system, sans-serif;
-            background: #1d1d1d;
-            color: #ffffff;
+            font-family: Arial, 'Microsoft YaHei', sans-serif;
+            background: #1a1a2e;
+            color: white;
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 20px;
-            margin: 0;
         }
 
-        .app-container {
+        .container {
             width: 100%;
-            max-width: 900px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            max-width: 800px;
+            text-align: center;
         }
 
-        .tile-grid {
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+            color: #e0e0e0;
+        }
+
+        /* 磁贴网格 */
+        .tiles {
             display: flex;
             flex-wrap: wrap;
-            gap: 24px;
+            gap: 20px;
             justify-content: center;
-            align-items: center;
-            transition: opacity 0.25s ease, transform 0.25s ease;
+            margin-bottom: 30px;
         }
 
         .tile {
             width: 200px;
             height: 200px;
-            background: #2d2d2d;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            color: #ffffff;
-            font-weight: 500;
-            font-size: 1.5rem;
-            letter-spacing: 1px;
-            border-radius: 4px;
-            position: relative;
-            overflow: hidden;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 6px 16px rgba(0,0,0,0.5);
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .tile.download { background: #107c10; }
-        .tile.join { background: #0078d4; }
-        .tile.about { background: #d83b01; }
-
-        .tile:hover {
-            transform: scale(1.04);
-            box-shadow: 0 12px 24px rgba(0,0,0,0.6);
-            filter: brightness(1.1);
-        }
-        .tile:active {
-            transform: scale(0.97);
-            filter: brightness(0.95);
-        }
-
-        .tile-icon {
-            font-size: 3.5rem;
-            margin-bottom: 12px;
-            line-height: 1;
-            text-shadow: 0 2px 6px rgba(0,0,0,0.3);
-        }
-        .tile-label {
-            font-size: 1.3rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            text-align: center;
-        }
-
-        .page-panel {
-            display: none;
-            width: 100%;
-            max-width: 650px;
-            background: #2a2a2a;
             border-radius: 8px;
-            padding: 40px 30px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.7);
-            text-align: center;
-            animation: fadeSlideIn 0.3s ease;
+            cursor: pointer;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-decoration: none;
+            color: white;
+            transition: transform 0.2s;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
         }
-        .page-panel.active {
+        .tile:hover {
+            transform: scale(1.05);
+        }
+
+        .tile.download { background: #27ae60; }
+        .tile.join { background: #2980b9; }
+        .tile.about { background: #c0392b; }
+
+        .tile .icon { font-size: 3rem; margin-bottom: 10px; }
+        .tile .label { font-size: 1.2rem; }
+
+        /* 内容面板 */
+        .panel {
+            display: none;
+            background: #16213e;
+            border-radius: 12px;
+            padding: 40px 30px;
+            max-width: 600px;
+            margin: 0 auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        .panel.active {
             display: block;
         }
 
-        @keyframes fadeSlideIn {
-            0% { opacity: 0; transform: translateY(25px); }
-            100% { opacity: 1; transform: translateY(0); }
-        }
-
-        .back-button {
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.25);
-            color: #ffffff;
-            font-size: 1rem;
-            padding: 10px 24px;
-            border-radius: 30px;
-            cursor: pointer;
-            margin-bottom: 28px;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s;
-            font-weight: 500;
-        }
-        .back-button:hover {
-            background: rgba(255,255,255,0.2);
-            border-color: rgba(255,255,255,0.5);
-        }
-
-        .panel-title {
-            font-size: 2.2rem;
-            font-weight: 600;
-            margin-bottom: 20px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-        .panel-content {
-            font-size: 1.1rem;
-            line-height: 1.7;
-            margin-bottom: 30px;
-            color: #e0e0e0;
-        }
-
-        .action-button {
+        .back-btn {
             display: inline-block;
-            background: #0078d4;
+            padding: 10px 25px;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.3);
             color: white;
-            font-weight: 600;
-            font-size: 1.1rem;
-            padding: 14px 32px;
-            border: none;
-            border-radius: 6px;
-            text-decoration: none;
+            border-radius: 25px;
             cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: 0 4px 12px rgba(0,120,212,0.4);
-            letter-spacing: 0.5px;
-            margin: 6px;
+            font-size: 1rem;
+            margin-bottom: 25px;
+            transition: background 0.2s;
         }
-        .action-button:hover {
-            background: #1084e0;
-            box-shadow: 0 6px 18px rgba(0,120,212,0.6);
+        .back-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .panel h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        .panel p {
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            color: #ccc;
+            line-height: 1.6;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 14px 35px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.2s;
+        }
+        .btn:hover {
+            opacity: 0.9;
             transform: translateY(-2px);
         }
-        .action-button.green {
-            background: #107c10;
-            box-shadow: 0 4px 12px rgba(16,124,16,0.4);
+        .btn-green { background: #27ae60; }
+        .btn-blue { background: #2980b9; }
+
+        /* 项目卡片 */
+        .cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin: 25px 0;
         }
-        .action-button.green:hover {
-            background: #189618;
-            box-shadow: 0 6px 18px
+        .card {
+            background: #0f3460;
+            border-radius: 10px;
+            padding: 20px;
+            width: 230px;
+            text-align: left;
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            word-break: break-all;
+        }
+        .card p {
+            font-size: 0.9rem;
+            color: #aaa;
+            margin-bottom: 12px;
+        }
+        .card a {
+            color: #5dade2;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .card a:hover {
+            text-decoration: underline;
+        }
+
+        .qq-box {
+            background: #0f3460;
+            border: 2px dashed #2980b9;
+            border-radius: 10px;
+            padding: 20px;
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .copy-btn {
+            padding: 10px 25px;
+            background: #34495e;
+            border: none;
+            color: white;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .copy-btn:hover {
+            background: #2c3e50;
+        }
+
+        @media (max-width: 600px) {
+            .tile {
+                width: 140px;
+                height: 1
