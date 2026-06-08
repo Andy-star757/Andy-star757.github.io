@@ -5,192 +5,217 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>模组主页</title>
     <style>
-        /* 基础重置 */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
         body {
-            font-family: Arial, 'Microsoft YaHei', sans-serif;
             background: #1a1a2e;
             color: white;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 800px;
+            font-family: Arial, sans-serif;
             text-align: center;
+            padding: 50px 20px;
         }
 
         h1 {
-            font-size: 2.5rem;
             margin-bottom: 40px;
-            color: #e0e0e0;
+            font-size: 2rem;
         }
 
-        /* 磁贴网格 */
         .tiles {
             display: flex;
             flex-wrap: wrap;
             gap: 20px;
             justify-content: center;
-            margin-bottom: 30px;
         }
 
         .tile {
             width: 200px;
             height: 200px;
+            background: red;
+            border-radius: 10px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            border-radius: 8px;
             cursor: pointer;
             font-size: 1.5rem;
             font-weight: bold;
-            text-decoration: none;
             color: white;
-            transition: transform 0.2s;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-        }
-        .tile:hover {
-            transform: scale(1.05);
         }
 
         .tile.download { background: #27ae60; }
         .tile.join { background: #2980b9; }
         .tile.about { background: #c0392b; }
 
-        .tile .icon { font-size: 3rem; margin-bottom: 10px; }
-        .tile .label { font-size: 1.2rem; }
+        .tile:hover {
+            transform: scale(1.05);
+        }
 
-        /* 内容面板 */
+        .icon {
+            font-size: 3rem;
+        }
+
+        /* 面板默认隐藏 */
         .panel {
             display: none;
             background: #16213e;
-            border-radius: 12px;
-            padding: 40px 30px;
             max-width: 600px;
-            margin: 0 auto;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            margin: 20px auto;
+            padding: 30px;
+            border-radius: 10px;
         }
+
         .panel.active {
             display: block;
         }
 
         .back-btn {
-            display: inline-block;
             padding: 10px 25px;
-            background: rgba(255,255,255,0.1);
-            border: 2px solid rgba(255,255,255,0.3);
+            background: #333;
             color: white;
+            border: none;
             border-radius: 25px;
             cursor: pointer;
             font-size: 1rem;
-            margin-bottom: 25px;
-            transition: background 0.2s;
-        }
-        .back-btn:hover {
-            background: rgba(255,255,255,0.2);
-        }
-
-        .panel h2 {
-            font-size: 2rem;
             margin-bottom: 20px;
-        }
-
-        .panel p {
-            font-size: 1.1rem;
-            margin-bottom: 20px;
-            color: #ccc;
-            line-height: 1.6;
         }
 
         .btn {
             display: inline-block;
             padding: 14px 35px;
+            background: #27ae60;
+            color: white;
+            text-decoration: none;
             border-radius: 8px;
             font-size: 1.1rem;
             font-weight: bold;
-            color: white;
-            text-decoration: none;
-            border: none;
-            cursor: pointer;
-            margin: 5px;
-            transition: all 0.2s;
-        }
-        .btn:hover {
-            opacity: 0.9;
-            transform: translateY(-2px);
-        }
-        .btn-green { background: #27ae60; }
-        .btn-blue { background: #2980b9; }
-
-        /* 项目卡片 */
-        .cards {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            justify-content: center;
-            margin: 25px 0;
-        }
-        .card {
-            background: #0f3460;
-            border-radius: 10px;
-            padding: 20px;
-            width: 230px;
-            text-align: left;
-            transition: transform 0.2s;
-        }
-        .card:hover {
-            transform: translateY(-5px);
-        }
-        .card h3 {
-            font-size: 1.1rem;
-            margin-bottom: 8px;
-            word-break: break-all;
-        }
-        .card p {
-            font-size: 0.9rem;
-            color: #aaa;
-            margin-bottom: 12px;
-        }
-        .card a {
-            color: #5dade2;
-            text-decoration: none;
-            font-weight: bold;
-        }
-        .card a:hover {
-            text-decoration: underline;
         }
 
         .qq-box {
             background: #0f3460;
             border: 2px dashed #2980b9;
-            border-radius: 10px;
             padding: 20px;
             font-size: 2rem;
-            font-weight: bold;
             margin: 20px 0;
         }
 
         .copy-btn {
             padding: 10px 25px;
             background: #34495e;
-            border: none;
             color: white;
+            border: none;
             border-radius: 25px;
             cursor: pointer;
             font-size: 1rem;
         }
-        .copy-btn:hover {
-            background: #2c3e50;
+
+        .cards {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
         }
 
-        @media (max-width: 600px) {
-            .tile {
-                width: 140px;
-                height: 1
+        .card {
+            background: #0f3460;
+            padding: 20px;
+            border-radius: 10px;
+            width: 220px;
+        }
+
+        .card a {
+            color: #5dade2;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🔧 模组管理中心</h1>
+
+    <!-- ====== 磁贴（始终显示） ====== -->
+    <div class="tiles" id="tilesContainer">
+        <div class="tile download" onclick="showPanel('download')">
+            <div class="icon">⬇️</div>
+            <div>下载</div>
+        </div>
+        <div class="tile join" onclick="showPanel('join')">
+            <div class="icon">👥</div>
+            <div>加入我们</div>
+        </div>
+        <div class="tile about" onclick="showPanel('about')">
+            <div class="icon">ℹ️</div>
+            <div>了解我们</div>
+        </div>
+    </div>
+
+    <!-- ====== 下载面板 ====== -->
+    <div class="panel" id="downloadPanel">
+        <button class="back-btn" onclick="showTiles()">← 返回主页</button>
+        <h2>📦 下载模组</h2>
+        <p>点击下方按钮前往云盘下载</p>
+        <a href="https://1850807544.share.123865.com/123pan/OOZxvd-46c6d" target="_blank" class="btn">🚀 立即下载</a>
+    </div>
+
+    <!-- ====== 加入我们面板 ====== -->
+    <div class="panel" id="joinPanel">
+        <button class="back-btn" onclick="showTiles()">← 返回主页</button>
+        <h2>💬 加入我们</h2>
+        <div class="qq-box">🐧 981913198</div>
+        <button class="copy-btn" onclick="copyQQ()">📋 复制群号</button>
+        <p id="copyMsg" style="color:#2ecc71; display:none; margin-top:10px;">✅ 已复制！</p>
+    </div>
+
+    <!-- ====== 了解我们面板 ====== -->
+    <div class="panel" id="aboutPanel">
+        <button class="back-btn" onclick="showTiles()">← 返回主页</button>
+        <h2>🔍 了解我们</h2>
+        <p>两个项目页面：</p>
+        <div class="cards">
+            <div class="card">
+                <h3>📁 主项目</h3>
+                <p>Andy-star757.github.io</p>
+                <a href="https://andy-star757.github.io" target="_blank">打开 →</a>
+            </div>
+            <div class="card">
+                <h3>📄 了解我们</h3>
+                <p>Andy-star757.github.io-know-us</p>
+                <a href="https://andy-star757.github.io/Andy-star757.github.io-know-us" target="_blank">打开 →</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 显示面板
+        function showPanel(type) {
+            // 隐藏磁贴
+            document.getElementById('tilesContainer').style.display = 'none';
+            // 隐藏所有面板
+            document.getElementById('downloadPanel').classList.remove('active');
+            document.getElementById('joinPanel').classList.remove('active');
+            document.getElementById('aboutPanel').classList.remove('active');
+            // 显示对应面板
+            if (type === 'download') document.getElementById('downloadPanel').classList.add('active');
+            if (type === 'join') document.getElementById('joinPanel').classList.add('active');
+            if (type === 'about') document.getElementById('aboutPanel').classList.add('active');
+        }
+
+        // 返回磁贴
+        function showTiles() {
+            document.getElementById('tilesContainer').style.display = 'flex';
+            document.getElementById('downloadPanel').classList.remove('active');
+            document.getElementById('joinPanel').classList.remove('active');
+            document.getElementById('aboutPanel').classList.remove('active');
+        }
+
+        // 复制QQ号
+        function copyQQ() {
+            navigator.clipboard.writeText('981913198').then(function() {
+                document.getElementById('copyMsg').style.display = 'block';
+                setTimeout(function() {
+                    document.getElementById('copyMsg').style.display = 'none';
+                }, 2000);
+            });
+        }
+    </script>
+
+</body>
+</html>
